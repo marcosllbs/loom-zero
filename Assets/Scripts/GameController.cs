@@ -126,10 +126,10 @@ public class GameController : MonoBehaviour
     private void UpdateScoreUI()
     {
         if (scoreText != null)
-            scoreText.text = $"Score: {score}";
+            scoreText.text = $"{score}";
 
         if (comboText != null)
-            comboText.text = combo > 1 ? $"Combo x{combo}" : "";
+            comboText.text = $"Combo:{combo}";
     }
 
     public void OnCardClicked(Card card)
@@ -369,6 +369,10 @@ public class GameController : MonoBehaviour
         score = data.score;
         combo = data.combo;
 
+        int totalCards = rows * columns;
+        totalPairs = totalCards / 2;
+        matchedPairs = 0;
+
         cardModelList.Clear();
 
 
@@ -400,6 +404,8 @@ public class GameController : MonoBehaviour
                 c.SetMatched();
             }
         }
+
+        UpdateScoreUI();
 
         Debug.Log("Game loaded from save.");
         canInteract = true;
