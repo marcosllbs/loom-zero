@@ -303,8 +303,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ce14e0337ce68d46bee570c6088184e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rows: 5
-  columns: 4
+  rows: 6
+  columns: 5
+  margin: 20
+  spacing: 30
+  minCardSize: 150
+  maxCardSize: 300
   boardRoot: {fileID: 1695806931}
   cardPrefab: {fileID: 6390867187492013700, guid: 092438467f1dfab4a905203dde644de1, type: 3}
 --- !u!4 &1089963678
@@ -354,10 +358,10 @@ RectTransform:
   m_Father: {fileID: 1816244043}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1080, y: 2282}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1695806932
 MonoBehaviour:
@@ -372,17 +376,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Padding:
-    m_Left: 0
-    m_Right: 0
-    m_Top: 0
-    m_Bottom: 0
-  m_ChildAlignment: 0
+    m_Left: 30
+    m_Right: 30
+    m_Top: 30
+    m_Bottom: 30
+  m_ChildAlignment: 4
   m_StartCorner: 0
   m_StartAxis: 0
   m_CellSize: {x: 100, y: 100}
-  m_Spacing: {x: 0, y: 0}
+  m_Spacing: {x: 45, y: 45}
   m_Constraint: 1
-  m_ConstraintCount: 3
+  m_ConstraintCount: 2
 --- !u!1 &1816244042
 GameObject:
   m_ObjectHideFlags: 0

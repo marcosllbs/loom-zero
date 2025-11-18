@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -6,17 +5,27 @@ using UnityEngine.UI;
 public class GameController : MonoBehaviour
 {
     [Header("Board Config")]
-    [SerializeField] int rows = 2;
-    [SerializeField] int columns = 4;
+    [SerializeField] private int rows = 2;
+    [SerializeField] private int columns = 3;
+
+    [Header("Layout")]
+    [SerializeField] private float margin = 20f;
+    [SerializeField] private float spacing = 10f;
+    [SerializeField] private float minCardSize = 200f;
+    [SerializeField] private float maxCardSize = 300f;
+
 
     [Header("References")]
-    [SerializeField] RectTransform boardRoot;
-    [SerializeField] Card cardPrefab;
+    [SerializeField] private RectTransform boardRoot; // tem o GridLayoutGroup
+    [SerializeField] private Card cardPrefab;
 
-    private List<CardModel> cardModelsList = new List<CardModel>();
-    private List<Card> cardsPrefabList = new List<Card>();
+    private List<CardModel> cardModelList = new List<CardModel>();
+    private List<Card> cardList = new List<Card>();
 
-    void Start()
+    float cellWidth;
+    float cellHeight;
+
+    private void Start()
     {
         StartNewGame();
     }
@@ -27,13 +36,14 @@ public class GameController : MonoBehaviour
 
         if (totalCards % 2 != 0)
         {
-            Debug.LogWarning("The total of cards need to be even");
+            Debug.LogWarning("O total de cartas precisa ser PAR para formar duplas.");
             return;
         }
 
-        cardModelsList = GenerateDeck(totalCards);
+        cardModelList = GenerateDeck(totalCards);
         BuildBoard();
     }
+
 
     private List<CardModel> GenerateDeck(int totalCards)
     {
@@ -57,44 +67,82 @@ public class GameController : MonoBehaviour
         return list;
     }
 
+
     private void BuildBoard()
     {
+
+
         for (int i = boardRoot.childCount - 1; i >= 0; i--)
         {
             Destroy(boardRoot.GetChild(i).gameObject);
         }
+        cardList.Clear();
 
-        cardsPrefabList.Clear();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(boardRoot);
+
 
         var grid = boardRoot.GetComponent<GridLayoutGroup>();
-
         if (grid != null)
         {
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             grid.constraintCount = columns;
 
+            Vector2 size = boardRoot.rect.size;
 
-            var size = boardRoot.rect.size;
+            float reference = Mathf.Min(size.x, size.y);
 
-            float cellWidth =
-                (size.x - grid.padding.left - grid.padding.right - grid.spacing.x * (columns - 1))
-                / columns;
 
-            float cellHeight =
-                (size.y - grid.padding.top - grid.padding.bottom - grid.spacing.y * (rows - 1))
-                / rows;
+            float marginFactor = 0.05f;
+            float spacingFactor = 0.02f;
 
-            grid.cellSize = new Vector2(cellWidth, cellHeight);
+            float marginPx = reference * marginFactor;
+            float spacingPx = reference * spacingFactor;
+
+
+            float availableWidth =
+                size.x - 2f * marginPx - spacingPx * (columns - 1);
+            float availableHeight =
+                size.y - 2f * marginPx - spacingPx * (rows - 1);
+
+            cellWidth = availableWidth / columns;
+            cellHeight = availableHeight / rows;
+
+
+            float baseSize = Mathf.Min(cellWidth, cellHeight);
+
+            float clampedSize = Mathf.Clamp(baseSize, minCardSize, maxCardSize);
+
+
+            float finalWidth = clampedSize;
+            float finalHeight = clampedSize;
+
+
+
+            grid.cellSize = new Vector2(finalWidth, finalHeight);
+            grid.spacing = new Vector2(spacing, spacing * columns);
+            grid.padding = new RectOffset(
+                Mathf.RoundToInt(margin),
+                Mathf.RoundToInt(margin),
+                Mathf.RoundToInt(margin),
+                Mathf.RoundToInt(margin)
+            );
         }
 
-
-        for (int i = 0; i < cardModelsList.Count; i++)
+        for (int i = 0; i < cardModelList.Count; i++)
         {
             var cardInstance = Instantiate(cardPrefab, boardRoot);
-            cardInstance.Init(i, cardModelsList[i]);
-            cardsPrefabList.Add(cardInstance);
+            cardInstance.Init(i, cardModelList[i]);
+            cardList.Add(cardInstance);
+
+
+            var rt = cardInstance.GetComponent<RectTransform>();
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.localScale = Vector3.one;
+
         }
+
+
+
     }
-
 }
-
