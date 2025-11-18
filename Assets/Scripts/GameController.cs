@@ -25,6 +25,12 @@ public class GameController : MonoBehaviour
     float cellWidth;
     float cellHeight;
 
+    private Card firstCard = null;
+    private Card secondCard = null;
+    private bool checking = false;
+
+    private int score = 0;
+
     private void Start()
     {
         StartNewGame();
@@ -36,12 +42,61 @@ public class GameController : MonoBehaviour
 
         if (totalCards % 2 != 0)
         {
-            Debug.LogWarning("O total de cartas precisa ser PAR para formar duplas.");
+            Debug.LogWarning("The total of Cards need to be even");
             return;
         }
 
         cardModelList = GenerateDeck(totalCards);
         BuildBoard();
+    }
+
+    public void OnCardClicked(Card card)
+    {
+        Debug.Log($"CARD CLICKED → ID {card.Id}");
+        if (checking) return;
+
+        card.Flip();
+
+        if (firstCard == null)
+        {
+            firstCard = card;
+            return;
+        }
+
+        if (secondCard == null)
+        {
+            secondCard = card;
+            StartCoroutine(CheckMatch());
+        }
+
+
+    }
+
+    private System.Collections.IEnumerator CheckMatch()
+    {
+        checking = true;
+        yield return new WaitForSeconds(0.5f);
+
+        if (firstCard.Id == secondCard.Id)
+        {
+            // MATCH
+            firstCard.SetMatched();
+            secondCard.SetMatched();
+
+            score += 100;
+            Debug.Log($"MATCH! score = {score}");
+        }
+        else
+        {
+            // FAIL 
+            firstCard.Flip();
+            secondCard.Flip();
+            Debug.Log("NO MATCH!");
+        }
+
+        firstCard = null;
+        secondCard = null;
+        checking = false;
     }
 
 

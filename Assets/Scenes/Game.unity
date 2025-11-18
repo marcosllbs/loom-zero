@@ -303,8 +303,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ce14e0337ce68d46bee570c6088184e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rows: 6
-  columns: 5
+  rows: 2
+  columns: 2
   margin: 20
   spacing: 30
   minCardSize: 150
