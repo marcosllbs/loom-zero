@@ -11,4 +11,14 @@ public class Card : MonoBehaviour
   [SerializeField] Image backImage;
   [SerializeField] Button cardButtom;
 
+
+  private int _index;
+  private CardModel _model;
+
+  public void Init(int index, CardModel model)
+  {
+    _index = index;
+    _model = model;
+  }
+
 }
