@@ -51,6 +51,10 @@ public class Card : MonoBehaviour, IPointerClickHandler
   public void Flip()
   {
     if (isAnimating || IsMatched) return;
+
+    if (controller != null)
+      controller.PlayFlipSfx();
+
     SetFlipped(!IsFlipped);
   }
 

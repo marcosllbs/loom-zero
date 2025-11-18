@@ -30,6 +30,14 @@ public class GameController : MonoBehaviour
     [SerializeField] private float startRevealDuration = 2f;
     [SerializeField] private float revealFlipDelay = 0.05f;
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource sfxSource;
+    [SerializeField] private AudioClip flipClip;
+    [SerializeField] private AudioClip matchClip;
+    [SerializeField] private AudioClip mismatchClip;
+    [SerializeField] private AudioClip winClip;
+    [SerializeField] private AudioClip buttonClip;
+
     private bool canInteract = false;
 
     private List<CardModel> cardModelList = new List<CardModel>();
@@ -90,6 +98,18 @@ public class GameController : MonoBehaviour
             canInteract = true;
         }
     }
+
+    private void PlaySfx(AudioClip clip)
+    {
+        if (sfxSource != null && clip != null)
+            sfxSource.PlayOneShot(clip);
+    }
+
+    public void PlayFlipSfx() => PlaySfx(flipClip);
+    public void PlayMatchSfx() => PlaySfx(matchClip);
+    public void PlayMismatchSfx() => PlaySfx(mismatchClip);
+    public void PlayWinSfx() => PlaySfx(winClip);
+    public void PlayButtonSfx() => PlaySfx(buttonClip);
 
     public void ResetAndStartNewGame()
     {
@@ -160,6 +180,9 @@ public class GameController : MonoBehaviour
 
             Debug.Log($"MATCH! Combo = {combo} | +{gained} pontos | Score total = {score}");
 
+            PlayMatchSfx();
+            UpdateScoreUI();
+
 
             yield return StartCoroutine(a.PlayMatchFeedback());
             yield return StartCoroutine(b.PlayMatchFeedback());
@@ -182,6 +205,8 @@ public class GameController : MonoBehaviour
             combo = 0;
             Debug.Log("NO MATCH! Combo resetado.");
 
+            PlayMismatchSfx();
+            UpdateScoreUI();
 
             yield return StartCoroutine(a.PlayMismatchFeedback());
             yield return StartCoroutine(b.PlayMismatchFeedback());
