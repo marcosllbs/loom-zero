@@ -16,8 +16,12 @@ public class GameController : MonoBehaviour
 
 
     [Header("References")]
-    [SerializeField] private RectTransform boardRoot; // tem o GridLayoutGroup
+    [SerializeField] private RectTransform boardRoot;
     [SerializeField] private Card cardPrefab;
+
+    [Header("Card Sprites")]
+    [SerializeField] private Sprite cardBackSprite;
+    [SerializeField] private List<Sprite> cardFaceSprites;
 
     private List<CardModel> cardModelList = new List<CardModel>();
     private List<Card> cardList = new List<Card>();
@@ -27,7 +31,7 @@ public class GameController : MonoBehaviour
 
     private Card firstCard = null;
     private Card secondCard = null;
-    private bool checking = false;
+    // private bool checking = false;
 
     private int score = 0;
 
@@ -53,7 +57,7 @@ public class GameController : MonoBehaviour
     public void OnCardClicked(Card card)
     {
         Debug.Log($"CARD CLICKED → ID {card.Id}");
-        if (checking) return;
+        //if (checking) return;
 
         card.Flip();
 
@@ -66,37 +70,53 @@ public class GameController : MonoBehaviour
         if (secondCard == null)
         {
             secondCard = card;
-            StartCoroutine(CheckMatch());
+
+            Card a = firstCard;
+            Card b = secondCard;
+
+
+            firstCard = null;
+            secondCard = null;
+            StartCoroutine(CheckMatch(a, b));
         }
 
 
     }
 
-    private System.Collections.IEnumerator CheckMatch()
+    private System.Collections.IEnumerator CheckMatch(Card a, Card b)
     {
-        checking = true;
-        yield return new WaitForSeconds(0.5f);
+        // checking = true;
 
-        if (firstCard.Id == secondCard.Id)
+
+        yield return new WaitForSeconds(0.1f);
+
+        if (a.Id == b.Id)
         {
-            // MATCH
-            firstCard.SetMatched();
-            secondCard.SetMatched();
+
+            yield return StartCoroutine(a.PlayMatchFeedback());
+            yield return StartCoroutine(b.PlayMatchFeedback());
+
+            a.SetMatched();
+            b.SetMatched();
 
             score += 100;
-            Debug.Log($"MATCH! score = {score}");
+            Debug.Log($"MATCH! Score = {score}");
         }
         else
         {
-            // FAIL 
-            firstCard.Flip();
-            secondCard.Flip();
+
+            yield return StartCoroutine(a.PlayMismatchFeedback());
+            yield return StartCoroutine(b.PlayMismatchFeedback());
+
+            a.Flip();
+            b.Flip();
+
             Debug.Log("NO MATCH!");
         }
 
-        firstCard = null;
-        secondCard = null;
-        checking = false;
+        a.Flip();
+        b.Flip();
+        //checking = false;
     }
 
 
@@ -185,8 +205,14 @@ public class GameController : MonoBehaviour
 
         for (int i = 0; i < cardModelList.Count; i++)
         {
+            var model = cardModelList[i];
+
+
+            Sprite frontSprite = cardFaceSprites[model.Id];
+            Sprite backSprite = cardBackSprite;
+
             var cardInstance = Instantiate(cardPrefab, boardRoot);
-            cardInstance.Init(i, cardModelList[i]);
+            cardInstance.Init(i, model, frontSprite, backSprite);
             cardList.Add(cardInstance);
 
 
@@ -194,7 +220,6 @@ public class GameController : MonoBehaviour
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.pivot = new Vector2(0.5f, 0.5f);
             rt.localScale = Vector3.one;
-
         }
 
 
