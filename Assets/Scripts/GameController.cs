@@ -117,10 +117,11 @@ public class GameController : MonoBehaviour
         combo = 0;
         matchedPairs = 0;
 
-
-        // SaveManager.Delete(); // Clear last save Data
+        SaveManager.Delete(); // Clear last save Data
 
         StartNewGame();
+
+        Debug.Log("SaveData cleared and game restarted!!");
     }
 
     private void UpdateScoreUI()
@@ -411,20 +412,25 @@ public class GameController : MonoBehaviour
         canInteract = true;
     }
 
-    private void OnApplicationQuit()
+    public void SaveCurrentGame()
     {
-        Debug.Log("Application quitting, saving game...");
         SaveGame();
     }
 
-    private void OnApplicationPause(bool pauseStatus)
-    {
-        if (pauseStatus)
-        {
-            Debug.Log("Application paused (background), saving game...");
-            SaveGame();
-        }
-    }
+    // private void OnApplicationQuit()
+    // {
+    //     Debug.Log("Application quitting, saving game...");
+    //     SaveGame();
+    // }
+
+    // private void OnApplicationPause(bool pauseStatus)
+    // {
+    //     if (pauseStatus)
+    //     {
+    //         Debug.Log("Application paused (background), saving game...");
+    //         SaveGame();
+    //     }
+    // }
 
     private System.Collections.IEnumerator StartRevealRoutine()
     {
