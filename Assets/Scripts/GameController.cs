@@ -18,10 +18,19 @@ public class GameController : MonoBehaviour
     [Header("References")]
     [SerializeField] private RectTransform boardRoot;
     [SerializeField] private Card cardPrefab;
+    [SerializeField] private TMPro.TextMeshProUGUI scoreText;
+    [SerializeField] private TMPro.TextMeshProUGUI comboText;
 
     [Header("Card Sprites")]
     [SerializeField] private Sprite cardBackSprite;
     [SerializeField] private List<Sprite> cardFaceSprites;
+
+    [Header("Start Reveal")]
+    [SerializeField] private bool revealAtStart = true;
+    [SerializeField] private float startRevealDuration = 2f;
+    [SerializeField] private float revealFlipDelay = 0.05f;
+
+    private bool canInteract = false;
 
     private List<CardModel> cardModelList = new List<CardModel>();
     private List<Card> cardList = new List<Card>();
@@ -33,11 +42,25 @@ public class GameController : MonoBehaviour
     private Card secondCard = null;
     // private bool checking = false;
 
+    [SerializeField] private int baseScore = 100;
+    [SerializeField] private int comboBonusPerMatch = 25;
+
     private int score = 0;
+    private int combo = 0;
+
+    private int matchedPairs = 0;
+    private int totalPairs = 0;
 
     private void Start()
     {
-        StartNewGame();
+        if (SaveManager.HasSave())
+        {
+            LoadGameFromSave();
+        }
+        else
+        {
+            StartNewGame();
+        }
     }
 
     public void StartNewGame()
@@ -50,12 +73,50 @@ public class GameController : MonoBehaviour
             return;
         }
 
+        totalPairs = totalCards / 2;
+        matchedPairs = 0;
+        firstCard = null;
+        secondCard = null;
+
         cardModelList = GenerateDeck(totalCards);
         BuildBoard();
+
+        if (revealAtStart)
+        {
+            StartCoroutine(StartRevealRoutine());
+        }
+        else
+        {
+            canInteract = true;
+        }
+    }
+
+    public void ResetAndStartNewGame()
+    {
+        score = 0;
+        combo = 0;
+        matchedPairs = 0;
+
+
+        // SaveManager.Delete(); // Clear last save Data
+
+        StartNewGame();
+    }
+
+    private void UpdateScoreUI()
+    {
+        if (scoreText != null)
+            scoreText.text = $"Score: {score}";
+
+        if (comboText != null)
+            comboText.text = combo > 1 ? $"Combo x{combo}" : "";
     }
 
     public void OnCardClicked(Card card)
     {
+        if (!canInteract)
+            return;
+
         Debug.Log($"CARD CLICKED → ID {card.Id}");
         //if (checking) return;
 
@@ -85,13 +146,20 @@ public class GameController : MonoBehaviour
 
     private System.Collections.IEnumerator CheckMatch(Card a, Card b)
     {
-        // checking = true;
-
 
         yield return new WaitForSeconds(0.1f);
 
         if (a.Id == b.Id)
         {
+            // MATCH
+            combo++;
+            matchedPairs++;
+
+            int gained = baseScore + (combo - 1) * comboBonusPerMatch;
+            score += gained;
+
+            Debug.Log($"MATCH! Combo = {combo} | +{gained} pontos | Score total = {score}");
+
 
             yield return StartCoroutine(a.PlayMatchFeedback());
             yield return StartCoroutine(b.PlayMatchFeedback());
@@ -99,24 +167,29 @@ public class GameController : MonoBehaviour
             a.SetMatched();
             b.SetMatched();
 
-            score += 100;
-            Debug.Log($"MATCH! Score = {score}");
+
+            if (matchedPairs >= totalPairs)
+            {
+                Debug.Log("Todas as cartas foram encontradas! Reiniciando com novo baralho.");
+                yield return new WaitForSeconds(0.5f);
+                ResetAndStartNewGame();
+                yield break;
+            }
         }
         else
         {
+            // ERROR
+            combo = 0;
+            Debug.Log("NO MATCH! Combo resetado.");
+
 
             yield return StartCoroutine(a.PlayMismatchFeedback());
             yield return StartCoroutine(b.PlayMismatchFeedback());
 
+
             a.Flip();
             b.Flip();
-
-            Debug.Log("NO MATCH!");
         }
-
-        a.Flip();
-        b.Flip();
-        //checking = false;
     }
 
 
@@ -224,5 +297,125 @@ public class GameController : MonoBehaviour
 
 
 
+    }
+
+    public void SaveGame()
+    {
+        if (cardList == null || cardList.Count == 0)
+        {
+            Debug.LogWarning("No cards to save.");
+            return;
+        }
+
+        SaveData data = new SaveData();
+        data.rows = rows;
+        data.columns = columns;
+        data.score = score;
+        data.combo = combo;
+
+        int count = cardList.Count;
+        data.cardIds = new List<int>(count);
+        data.matched = new List<bool>(count);
+        data.revealed = new List<bool>(count);
+
+        for (int i = 0; i < count; i++)
+        {
+            Card c = cardList[i];
+            data.cardIds.Add(c.Id);
+            data.matched.Add(c.IsMatched);
+            data.revealed.Add(c.IsFlipped);
+        }
+
+        SaveManager.Save(data);
+    }
+
+    public void LoadGameFromSave()
+    {
+        SaveData data = SaveManager.Load();
+        if (data == null)
+        {
+            Debug.LogWarning("Cannot load game: no save data.");
+            return;
+        }
+
+
+        rows = data.rows;
+        columns = data.columns;
+        score = data.score;
+        combo = data.combo;
+
+        cardModelList.Clear();
+
+
+        for (int i = 0; i < data.cardIds.Count; i++)
+        {
+            int id = data.cardIds[i];
+            var model = new CardModel(id);
+            model.IsMatched = data.matched[i];
+            model.IsRevealed = data.revealed[i];
+            cardModelList.Add(model);
+        }
+
+
+        BuildBoard();
+
+
+        for (int i = 0; i < cardList.Count; i++)
+        {
+            Card c = cardList[i];
+            bool matched = data.matched[i];
+            // bool revealed = data.revealed[i];
+
+
+            //  c.SetFlipped(revealed, instant: true);
+
+
+            if (matched)
+            {
+                c.SetMatched();
+            }
+        }
+
+        Debug.Log("Game loaded from save.");
+        canInteract = true;
+    }
+
+    private void OnApplicationQuit()
+    {
+        Debug.Log("Application quitting, saving game...");
+        SaveGame();
+    }
+
+    private void OnApplicationPause(bool pauseStatus)
+    {
+        if (pauseStatus)
+        {
+            Debug.Log("Application paused (background), saving game...");
+            SaveGame();
+        }
+    }
+
+    private System.Collections.IEnumerator StartRevealRoutine()
+    {
+        canInteract = false;
+
+
+        foreach (var card in cardList)
+        {
+            card.SetFlipped(true, instant: true);
+        }
+
+
+        yield return new WaitForSeconds(startRevealDuration);
+
+
+        foreach (var card in cardList)
+        {
+            card.SetFlipped(false, instant: false);
+            yield return new WaitForSeconds(revealFlipDelay);
+        }
+
+
+        canInteract = true;
     }
 }

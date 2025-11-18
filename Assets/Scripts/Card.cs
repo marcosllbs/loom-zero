@@ -58,7 +58,14 @@ public class Card : MonoBehaviour, IPointerClickHandler
   {
     IsMatched = true;
 
-    //gameObject.SetActive(false);
+
+    frontImage.enabled = false;
+    backImage.enabled = false;
+
+    frontImage.raycastTarget = false;
+    backImage.raycastTarget = false;
+
+    isAnimating = false;
   }
 
   public void SetFlipped(bool flipped, bool instant = false)
